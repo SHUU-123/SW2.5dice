@@ -7,6 +7,7 @@
 <style>
     :root {
         --primary: #3b82f6;
+        --primary-dark: #2563eb;
         --accent: #f59e0b;
         --bg: #f3f4f6;
         --surface: #ffffff;
@@ -63,7 +64,7 @@
         flex: 1;
         overflow-y: auto;
         padding: 10px;
-        padding-bottom: 80px;
+        padding-bottom: 40px;
     }
 
     /* セクション */
@@ -74,30 +75,40 @@
         margin-bottom: 15px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
-    h3 { margin: 0 0 10px 0; font-size: 16px; color: #555; }
+    
+    /* セクションヘッダー（タイトルとボタンを横並びにする） */
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+    h3 { margin: 0; font-size: 16px; color: #555; }
 
-    /* 固定2d6ボタン */
-    .fixed-roll-btn {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
+    /* メイン2d6ボタン（指定位置へ移動） */
+    .main-roll-btn {
         background: var(--primary);
         color: white;
-        font-weight: bold;
-        font-size: 18px;
         border: none;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 100;
+        padding: 8px 20px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 16px;
         cursor: pointer;
+        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.4);
+        display: flex;
+        align-items: center;
+        gap: 5px;
     }
-    .fixed-roll-btn span { font-size: 12px; font-weight: normal; opacity: 0.9; }
+    .main-roll-btn:active {
+        background: var(--primary-dark);
+        transform: translateY(1px);
+    }
+    .main-roll-btn span {
+        font-size: 12px;
+        font-weight: normal;
+        opacity: 0.9;
+    }
 
     /* ページネーション */
     .pagination {
@@ -137,7 +148,8 @@
         font-size: 14px;
         cursor: pointer;
     }
-    
+    .mod-btn:active { background: #bae6fd; }
+
     /* その他ダイス */
     .custom-row {
         display: flex;
@@ -212,7 +224,13 @@
 
 <main>
     <div class="section">
-        <h3>威力・判定 (2d6 + 修正)</h3>
+        <div class="section-header">
+            <h3>威力・判定 (2d6+修正)</h3>
+            <button class="main-roll-btn" onclick="roll2d6(0)">
+                2d6 <span>(平目)</span>
+            </button>
+        </div>
+
         <div class="pagination" id="pagination"></div>
         <div class="mod-grid" id="modGrid"></div>
     </div>
@@ -252,11 +270,6 @@
     </div>
 </main>
 
-<button class="fixed-roll-btn" onclick="roll2d6(0)">
-    2d6
-    <span>平目</span>
-</button>
-
 <script>
     // --- 初期設定 ---
     const TOTAL_MODS = 100;
@@ -265,46 +278,39 @@
     let logs = [];
     const MAX_LOGS = 100;
 
-    // デフォルトのキャラクターリスト構造
     const DEFAULT_CHAR_LIST = {
         pc: ["PC1", "PC2", "PC3", "PC4", "PC5"],
         enemy: ["Enemy1", "Enemy2", "Enemy3", "Enemy4"]
     };
     let charList = JSON.parse(JSON.stringify(DEFAULT_CHAR_LIST));
 
-    // 要素取得
     const charSelect = document.getElementById('charSelect');
     const logContainer = document.getElementById('log-container');
     const pagination = document.getElementById('pagination');
     const modGrid = document.getElementById('modGrid');
 
-    // 起動時
     window.onload = function() {
-        loadData();        // ログとキャラ名の読み込み
-        renderCharSelect();// プルダウン生成
+        loadData();
+        renderCharSelect();
         renderPagination();
         renderModButtons(0);
     };
 
     // --- キャラクター管理機能 ---
-
     function renderCharSelect() {
-        // 現在の選択値を保持（再描画時のため）
         const currentVal = charSelect.value;
         charSelect.innerHTML = "";
 
-        // PCグループ
         const optGroupPC = document.createElement('optgroup');
         optGroupPC.label = "プレイヤーキャラクター";
         charList.pc.forEach((name, index) => {
             const opt = document.createElement('option');
-            opt.value = `pc-${index}`; // 識別用ID
+            opt.value = `pc-${index}`;
             opt.textContent = name;
             optGroupPC.appendChild(opt);
         });
         charSelect.appendChild(optGroupPC);
 
-        // 敵グループ
         const optGroupEnemy = document.createElement('optgroup');
         optGroupEnemy.label = "敵キャラクター";
         charList.enemy.forEach((name, index) => {
@@ -315,9 +321,7 @@
         });
         charSelect.appendChild(optGroupEnemy);
 
-        // 前回の選択を復元（存在すれば）
         if (currentVal) {
-            // 選択肢が変わっている可能性があるので存在チェック
             const exists = Array.from(charSelect.options).some(o => o.value === currentVal);
             if(exists) charSelect.value = currentVal;
         }
@@ -333,15 +337,13 @@
 
         const newName = prompt("キャラクター名を入力してください:", currentName);
         if (newName && newName.trim() !== "") {
-            // データ更新
             if (type === 'pc') {
                 charList.pc[index] = newName.trim();
             } else {
                 charList.enemy[index] = newName.trim();
             }
-            saveData(); // 保存
-            renderCharSelect(); // 再描画
-            // 選択状態を維持（再描画でリセットされるため再設定）
+            saveData();
+            renderCharSelect();
             charSelect.value = selectedOption.value;
         }
     }
@@ -351,8 +353,7 @@
         return selectedOption ? selectedOption.textContent : "Unknown";
     }
 
-    // --- ダイス機能 (既存) ---
-
+    // --- ダイス機能 ---
     function roll2d6(mod) {
         const d1 = Math.floor(Math.random() * 6) + 1;
         const d2 = Math.floor(Math.random() * 6) + 1;
@@ -369,8 +370,8 @@
             styleClass = "fumble";
         }
 
-        const text = `2d6${mod >= 0 ? '+' : ''}${mod}`;
-        const detail = `[${d1},${d2}] + ${mod}`;
+        const text = `2d6${mod >= 0 ? (mod===0?'':'+') : ''}${mod===0?'':mod}`;
+        const detail = `[${d1},${d2}]${mod===0?'':' + '+mod}`;
         addLog(text, total, detail + note, styleClass);
     }
 
@@ -395,13 +396,12 @@
             rolls.push(r);
             sum += r;
         }
-        let detailStr = `[${rolls.join(',')}] + ${mod}`;
-        if (detailStr.length > 20) detailStr = `[Sum:${sum}] + ${mod}`;
-        addLog(`${count}d${sides}${mod >= 0 ? '+' : ''}${mod}`, sum + mod, detailStr);
+        let detailStr = `[${rolls.join(',')}]${mod===0?'':' + '+mod}`;
+        if (detailStr.length > 20) detailStr = `[Sum:${sum}]${mod===0?'':' + '+mod}`;
+        addLog(`${count}d${sides}${mod >= 0 ? (mod===0?'':'+') : ''}${mod===0?'':mod}`, sum + mod, detailStr);
     }
 
-    // --- ログ・データ保存 ---
-
+    // --- ログ・保存機能 ---
     function addLog(diceType, result, detail, styleClass = "") {
         const charName = getCurrentCharName();
         const timestamp = new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
@@ -446,9 +446,7 @@
 
     function saveData() {
         localStorage.setItem('sw25_logs', JSON.stringify(logs));
-        // キャラクター名リストも保存
         localStorage.setItem('sw25_char_list', JSON.stringify(charList));
-        // 最後に選択していたキャラの位置も保存したい場合はここに追加可能
         localStorage.setItem('sw25_last_char_idx', charSelect.value);
     }
 
@@ -462,8 +460,6 @@
         
         renderLogs();
         
-        // renderCharSelect後に値をセットするために、onload内で実行するが、
-        // ここでは変数に保持しておき renderCharSelect 内で使うか、直後に設定する
         setTimeout(() => {
             if(lastIdx) charSelect.value = lastIdx;
         }, 0);
@@ -500,7 +496,6 @@
         });
     }
 
-    // --- UI生成ヘルパー ---
     function renderPagination() {
         pagination.innerHTML = "";
         const pages = Math.ceil(TOTAL_MODS / PER_PAGE);
