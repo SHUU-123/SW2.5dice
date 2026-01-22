@@ -6,10 +6,9 @@
 <title>SW2.5 Dice Roller</title>
 <style>
     :root {
-        --primary: #3b82f6;
-        --primary-dark: #2563eb;
+        --primary: #2563eb;
+        --primary-light: #3b82f6;
         --enemy-color: #ef4444;
-        --enemy-dark: #b91c1c;
         --bg: #f3f4f6;
         --surface: #ffffff;
         --text: #1f2937;
@@ -18,155 +17,77 @@
     }
     body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        margin: 0;
-        padding: 0;
-        background: var(--bg);
-        color: var(--text);
-        display: flex;
-        flex-direction: column;
-        height: 100vh;
-        overflow: hidden;
+        margin: 0; padding: 0; background: var(--bg); color: var(--text);
+        display: flex; flex-direction: column; height: 100vh; overflow: hidden;
     }
 
-    /* ヘッダーエリア: キャラクター選択ボタン */
+    /* キャラクター選択ボタンエリア */
     header {
-        background: var(--surface);
-        padding: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        z-index: 10;
+        background: var(--surface); padding: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 10;
     }
-    .char-section {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-    .char-row {
-        display: flex;
-        gap: 5px;
-        overflow-x: auto;
-        padding-bottom: 2px;
-    }
-    .char-row span {
-        font-size: 11px;
-        color: #888;
-        min-width: 25px;
-        display: flex;
-        align-items: center;
-    }
+    .char-section { display: flex; flex-direction: column; gap: 8px; }
+    .char-row { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 2px; }
+    .char-row span { font-size: 11px; color: #888; min-width: 25px; display: flex; align-items: center; }
     .char-btn {
-        flex: 1;
-        min-width: 60px;
-        padding: 8px 4px;
-        font-size: 13px;
-        border: 2px solid #e5e7eb;
-        border-radius: 8px;
-        background: white;
-        cursor: pointer;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
+        flex: 1; min-width: 60px; padding: 8px 4px; font-size: 13px;
+        border: 2px solid #e5e7eb; border-radius: 8px; background: white;
+        cursor: pointer; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;
     }
-    /* PC選択時 */
-    .char-btn.pc-btn.active {
-        border-color: var(--primary);
-        background: #eff6ff;
-        color: var(--primary);
-        font-weight: bold;
-    }
-    /* 敵選択時 */
-    .char-btn.enemy-btn.active {
-        border-color: var(--enemy-color);
-        background: #fef2f2;
-        color: var(--enemy-color);
-        font-weight: bold;
-    }
+    .char-btn.pc-btn.active { border-color: var(--primary); background: #eff6ff; color: var(--primary); font-weight: bold; }
+    .char-btn.enemy-btn.active { border-color: var(--enemy-color); background: #fef2f2; color: var(--enemy-color); font-weight: bold; }
 
-    .header-controls {
-        display: flex;
-        justify-content: flex-end;
-        margin-top: 8px;
-    }
-    button.rename-btn {
-        padding: 4px 12px;
-        background: #f9fafb;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-        font-size: 12px;
-        cursor: pointer;
-    }
+    .header-controls { display: flex; justify-content: flex-end; margin-top: 8px; }
+    button.rename-btn { padding: 4px 12px; background: #f9fafb; border: 1px solid #ccc; border-radius: 6px; font-size: 12px; }
 
     /* メインエリア */
-    main {
-        flex: 1;
-        overflow-y: auto;
-        padding: 10px;
-    }
+    main { flex: 1; overflow-y: auto; padding: 10px; }
 
     .section {
-        background: var(--surface);
-        padding: 15px;
-        border-radius: 12px;
-        margin-bottom: 15px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        background: var(--surface); padding: 15px; border-radius: 12px;
+        margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     
     .section-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
+        display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
     }
     h3 { margin: 0; font-size: 16px; color: #555; }
 
+    /* ★ 2d6ボタンを巨大化 ★ */
     .main-roll-btn {
         background: var(--primary);
         color: white;
         border: none;
-        padding: 8px 20px;
-        border-radius: 20px;
+        padding: 15px 40px; /* サイズを大きく */
+        border-radius: 40px;
         font-weight: bold;
-        font-size: 16px;
+        font-size: 24px; /* 文字を大きく */
         cursor: pointer;
-        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.4);
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
         display: flex;
+        flex-direction: column; /* 文字を上下に並べる */
         align-items: center;
-        gap: 5px;
+        gap: 2px;
+        transition: transform 0.1s, background 0.1s;
     }
-    .main-roll-btn span { font-size: 12px; font-weight: normal; opacity: 0.9; }
+    .main-roll-btn:active {
+        transform: scale(0.95);
+        background: var(--primary-light);
+    }
+    .main-roll-btn span {
+        font-size: 12px;
+        font-weight: normal;
+        opacity: 0.9;
+        letter-spacing: 1px;
+    }
 
     /* 2d6+修正ボタン */
-    .pagination {
-        display: flex;
-        overflow-x: auto;
-        gap: 5px;
-        margin-bottom: 10px;
-        padding-bottom: 5px;
-    }
-    .page-btn {
-        padding: 6px 12px;
-        border: 1px solid var(--primary);
-        background: var(--surface);
-        color: var(--primary);
-        border-radius: 20px;
-        white-space: nowrap;
-        font-size: 13px;
-    }
+    .pagination { display: flex; overflow-x: auto; gap: 5px; margin-bottom: 10px; padding-bottom: 5px; }
+    .page-btn { padding: 6px 12px; border: 1px solid var(--primary); background: var(--surface); color: var(--primary); border-radius: 20px; white-space: nowrap; font-size: 13px; }
     .page-btn.active { background: var(--primary); color: white; }
     
-    .mod-grid {
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 8px;
-    }
-    .mod-btn {
-        background: #e0f2fe;
-        color: #0369a1;
-        border: none;
-        padding: 12px 0;
-        border-radius: 8px;
-        font-weight: bold;
-        font-size: 14px;
-    }
+    .mod-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    .mod-btn { background: #e0f2fe; color: #0369a1; border: none; padding: 12px 0; border-radius: 8px; font-weight: bold; font-size: 14px; }
 
     /* その他 */
     .custom-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
@@ -175,19 +96,14 @@
 
     /* ログ */
     .log-entry {
-        border-left: 4px solid #ccc;
-        padding: 8px 12px;
-        background: #f9fafb;
-        margin-bottom: 8px;
-        border-radius: 0 4px 4px 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        border-left: 4px solid #ccc; padding: 8px 12px; background: #f9fafb;
+        margin-bottom: 8px; border-radius: 0 4px 4px 0;
+        display: flex; justify-content: space-between; align-items: center;
     }
     .log-entry.crit { border-left-color: var(--crit); background: #d1fae5; }
     .log-entry.fumble { border-left-color: var(--fumble); background: #fee2e2; }
     .log-header { font-size: 12px; color: #666; }
-    .log-result { font-weight: bold; font-size: 18px; }
+    .log-result { font-weight: bold; font-size: 20px; }
     .log-detail { font-size: 12px; color: #888; }
     .text-btn { background: none; border: none; color: var(--primary); font-size: 14px; text-decoration: underline; margin-left: 10px;}
     .text-btn.danger { color: var(--fumble); }
@@ -197,12 +113,8 @@
 
 <header>
     <div class="char-section">
-        <div class="char-row" id="pcRow">
-            <span>PC</span>
-            </div>
-        <div class="char-row" id="enemyRow">
-            <span>敵</span>
-            </div>
+        <div class="char-row" id="pcRow"><span>PC</span></div>
+        <div class="char-row" id="enemyRow"><span>敵</span></div>
     </div>
     <div class="header-controls">
         <button class="rename-btn" onclick="renameCharacter()">選択中の名前を変更</button>
@@ -212,9 +124,10 @@
 <main>
     <div class="section">
         <div class="section-header">
-            <h3>威力・判定 (2d6+修正)</h3>
+            <h3>威力・判定</h3>
             <button class="main-roll-btn" onclick="roll2d6(0)">
-                2d6 <span>(平目)</span>
+                2d6
+                <span>(平目)</span>
             </button>
         </div>
         <div class="pagination" id="pagination"></div>
@@ -261,12 +174,11 @@
     let logs = [];
     const MAX_LOGS = 100;
 
-    // キャラクターデータ
     let charList = {
         pc: ["PC1", "PC2", "PC3", "PC4", "PC5"],
         enemy: ["敵1", "敵2", "敵3", "敵4"]
     };
-    let selectedCharId = "pc-0"; // 初期選択
+    let selectedCharId = "pc-0";
 
     window.onload = function() {
         loadData();
@@ -275,12 +187,9 @@
         renderModButtons(0);
     };
 
-    // --- キャラクターボタン生成 ---
     function renderCharButtons() {
         const pcRow = document.getElementById('pcRow');
         const enemyRow = document.getElementById('enemyRow');
-        
-        // PCボタン
         pcRow.innerHTML = '<span>PC</span>';
         charList.pc.forEach((name, i) => {
             const id = `pc-${i}`;
@@ -290,8 +199,6 @@
             btn.onclick = () => selectChar(id);
             pcRow.appendChild(btn);
         });
-
-        // 敵ボタン
         enemyRow.innerHTML = '<span>敵</span>';
         charList.enemy.forEach((name, i) => {
             const id = `enemy-${i}`;
@@ -325,7 +232,6 @@
         return charList[type][idx];
     }
 
-    // --- ダイス機能 ---
     function roll2d6(mod) {
         const d1 = Math.floor(Math.random() * 6) + 1;
         const d2 = Math.floor(Math.random() * 6) + 1;
@@ -334,7 +240,6 @@
         let styleClass = "";
         if (sum === 12) { note = " (自動成功)"; styleClass = "crit"; }
         else if (sum === 2) { note = " (自動失敗)"; styleClass = "fumble"; }
-        
         const diceText = `2d6${mod === 0 ? '' : (mod > 0 ? '+' + mod : mod)}`;
         addLog(diceText, sum + mod, `[${d1},${d2}]${mod === 0 ? '' : ' + ' + mod}${note}`, styleClass);
     }
@@ -350,21 +255,15 @@
         const c = parseInt(document.getElementById('customDiceCount').value) || 1;
         const s = parseInt(document.getElementById('customDiceSides').value) || 6;
         const m = parseInt(document.getElementById('customDiceMod').value) || 0;
-        let rolls = [];
-        let sum = 0;
+        let rolls = []; let sum = 0;
         for(let i=0; i<c; i++) { let r = Math.floor(Math.random() * s) + 1; rolls.push(r); sum += r; }
         addLog(`${c}d${s}${m >= 0 ? (m===0?'':'+'+m) : m}`, sum + m, `[${rolls.join(',')}] + ${m}`);
     }
 
-    // --- ログ・データ管理 ---
     function addLog(diceType, result, detail, styleClass = "") {
         const log = {
             time: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
-            char: getCurrentCharName(),
-            dice: diceType,
-            result: result,
-            detail: detail,
-            style: styleClass
+            char: getCurrentCharName(), dice: diceType, result: result, detail: detail, style: styleClass
         };
         logs.unshift(log);
         if (logs.length > MAX_LOGS) logs.pop();
