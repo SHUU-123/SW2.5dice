@@ -32,27 +32,41 @@
         padding: 10px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         display: flex;
-        gap: 10px;
+        gap: 8px;
         align-items: center;
         z-index: 10;
     }
-    input.char-name {
+    .char-select-wrapper {
+        flex: 1;
+        display: flex;
+        gap: 5px;
+    }
+    select.char-select {
         flex: 1;
         padding: 8px;
         font-size: 16px;
         border: 1px solid #ccc;
         border-radius: 8px;
+        background: white;
+    }
+    button.rename-btn {
+        padding: 8px 12px;
+        background: #e5e7eb;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 12px;
+        cursor: pointer;
     }
 
-    /* メインエリア（スクロール可能） */
+    /* メインエリア */
     main {
         flex: 1;
         overflow-y: auto;
         padding: 10px;
-        padding-bottom: 80px; /* 固定ボタンのスペース確保 */
+        padding-bottom: 80px;
     }
 
-    /* セクションスタイル */
+    /* セクション */
     .section {
         background: var(--surface);
         padding: 15px;
@@ -62,7 +76,7 @@
     }
     h3 { margin: 0 0 10px 0; font-size: 16px; color: #555; }
 
-    /* 固定2d6ボタン (画面右下に常に表示) */
+    /* 固定2d6ボタン */
     .fixed-roll-btn {
         position: fixed;
         bottom: 20px;
@@ -82,12 +96,10 @@
         justify-content: center;
         z-index: 100;
         cursor: pointer;
-        transition: transform 0.1s;
     }
-    .fixed-roll-btn:active { transform: scale(0.95); }
     .fixed-roll-btn span { font-size: 12px; font-weight: normal; opacity: 0.9; }
 
-    /* ページ切り替えボタングリッド */
+    /* ページネーション */
     .pagination {
         display: flex;
         overflow-x: auto;
@@ -125,8 +137,7 @@
         font-size: 14px;
         cursor: pointer;
     }
-    .mod-btn:active { background: #bae6fd; }
-
+    
     /* その他ダイス */
     .custom-row {
         display: flex;
@@ -172,7 +183,6 @@
     .log-result { font-weight: bold; font-size: 16px; }
     .log-detail { font-size: 12px; color: #888; }
     
-    /* ログ操作ボタン */
     .log-controls {
         display: flex;
         justify-content: flex-end;
@@ -188,28 +198,27 @@
         text-decoration: underline;
     }
     .text-btn.danger { color: var(--fumble); }
-
 </style>
 </head>
 <body>
 
 <header>
-    <label for="charName">PC名:</label>
-    <input type="text" id="charName" class="char-name" placeholder="キャラクター名を入力">
+    <div class="char-select-wrapper">
+        <select id="charSelect" class="char-select">
+            </select>
+        <button class="rename-btn" onclick="renameCharacter()">名前変更</button>
+    </div>
 </header>
 
 <main>
     <div class="section">
         <h3>威力・判定 (2d6 + 修正)</h3>
-        <div class="pagination" id="pagination">
-            </div>
-        <div class="mod-grid" id="modGrid">
-            </div>
+        <div class="pagination" id="pagination"></div>
+        <div class="mod-grid" id="modGrid"></div>
     </div>
 
     <div class="section">
         <h3>その他ダイス</h3>
-        
         <div class="custom-row">
             <select id="d100-select">
                 <option value="1d100">1d100 (通常)</option>
@@ -218,9 +227,7 @@
             </select>
             <button class="action-btn" onclick="rollD100()">振る</button>
         </div>
-
         <hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">
-
         <div class="custom-row">
             <input type="number" id="customDiceCount" value="1" min="1" style="width: 50px;">
             <span>d</span>
@@ -251,38 +258,107 @@
 </button>
 
 <script>
-    // --- 初期化処理 ---
-    const modGrid = document.getElementById('modGrid');
-    const pagination = document.getElementById('pagination');
-    const logContainer = document.getElementById('log-container');
-    const charNameInput = document.getElementById('charName');
-
-    // ログデータ保持用
-    let logs = [];
-    const MAX_LOGS = 100;
-
-    // ページ設定
+    // --- 初期設定 ---
     const TOTAL_MODS = 100;
     const PER_PAGE = 20;
     let currentPage = 0;
+    let logs = [];
+    const MAX_LOGS = 100;
+
+    // デフォルトのキャラクターリスト構造
+    const DEFAULT_CHAR_LIST = {
+        pc: ["PC1", "PC2", "PC3", "PC4", "PC5"],
+        enemy: ["Enemy1", "Enemy2", "Enemy3", "Enemy4"]
+    };
+    let charList = JSON.parse(JSON.stringify(DEFAULT_CHAR_LIST));
+
+    // 要素取得
+    const charSelect = document.getElementById('charSelect');
+    const logContainer = document.getElementById('log-container');
+    const pagination = document.getElementById('pagination');
+    const modGrid = document.getElementById('modGrid');
 
     // 起動時
     window.onload = function() {
+        loadData();        // ログとキャラ名の読み込み
+        renderCharSelect();// プルダウン生成
         renderPagination();
         renderModButtons(0);
-        loadData();
     };
 
-    // --- ダイスロジック ---
+    // --- キャラクター管理機能 ---
 
-    // 2d6 + 修正
+    function renderCharSelect() {
+        // 現在の選択値を保持（再描画時のため）
+        const currentVal = charSelect.value;
+        charSelect.innerHTML = "";
+
+        // PCグループ
+        const optGroupPC = document.createElement('optgroup');
+        optGroupPC.label = "プレイヤーキャラクター";
+        charList.pc.forEach((name, index) => {
+            const opt = document.createElement('option');
+            opt.value = `pc-${index}`; // 識別用ID
+            opt.textContent = name;
+            optGroupPC.appendChild(opt);
+        });
+        charSelect.appendChild(optGroupPC);
+
+        // 敵グループ
+        const optGroupEnemy = document.createElement('optgroup');
+        optGroupEnemy.label = "敵キャラクター";
+        charList.enemy.forEach((name, index) => {
+            const opt = document.createElement('option');
+            opt.value = `enemy-${index}`;
+            opt.textContent = name;
+            optGroupEnemy.appendChild(opt);
+        });
+        charSelect.appendChild(optGroupEnemy);
+
+        // 前回の選択を復元（存在すれば）
+        if (currentVal) {
+            // 選択肢が変わっている可能性があるので存在チェック
+            const exists = Array.from(charSelect.options).some(o => o.value === currentVal);
+            if(exists) charSelect.value = currentVal;
+        }
+    }
+
+    function renameCharacter() {
+        const selectedOption = charSelect.options[charSelect.selectedIndex];
+        if (!selectedOption) return;
+
+        const [type, indexStr] = selectedOption.value.split('-');
+        const index = parseInt(indexStr);
+        const currentName = selectedOption.textContent;
+
+        const newName = prompt("キャラクター名を入力してください:", currentName);
+        if (newName && newName.trim() !== "") {
+            // データ更新
+            if (type === 'pc') {
+                charList.pc[index] = newName.trim();
+            } else {
+                charList.enemy[index] = newName.trim();
+            }
+            saveData(); // 保存
+            renderCharSelect(); // 再描画
+            // 選択状態を維持（再描画でリセットされるため再設定）
+            charSelect.value = selectedOption.value;
+        }
+    }
+
+    function getCurrentCharName() {
+        const selectedOption = charSelect.options[charSelect.selectedIndex];
+        return selectedOption ? selectedOption.textContent : "Unknown";
+    }
+
+    // --- ダイス機能 (既存) ---
+
     function roll2d6(mod) {
         const d1 = Math.floor(Math.random() * 6) + 1;
         const d2 = Math.floor(Math.random() * 6) + 1;
         const sum = d1 + d2;
         const total = sum + mod;
 
-        // SW2.5的判定
         let note = "";
         let styleClass = "";
         if (sum === 12) {
@@ -295,26 +371,18 @@
 
         const text = `2d6${mod >= 0 ? '+' : ''}${mod}`;
         const detail = `[${d1},${d2}] + ${mod}`;
-        
         addLog(text, total, detail + note, styleClass);
     }
 
-    // 1d100 (プルダウン)
     function rollD100() {
         const select = document.getElementById('d100-select');
-        const val = select.value; // "1d100" or "1d100+5" etc
-        
-        // 解析
+        const val = select.value;
         const parts = val.split('+');
         const mod = parts.length > 1 ? parseInt(parts[1]) : 0;
-        
         const res = Math.floor(Math.random() * 100) + 1;
-        const total = res + mod;
-
-        addLog(val, total, `[${res}] + ${mod}`);
+        addLog(val, res + mod, `[${res}] + ${mod}`);
     }
 
-    // カスタムダイス
     function rollCustom() {
         const count = parseInt(document.getElementById('customDiceCount').value) || 1;
         const sides = parseInt(document.getElementById('customDiceSides').value) || 6;
@@ -327,19 +395,15 @@
             rolls.push(r);
             sum += r;
         }
-        const total = sum + mod;
-        
-        // 詳細が長すぎる場合は省略
         let detailStr = `[${rolls.join(',')}] + ${mod}`;
         if (detailStr.length > 20) detailStr = `[Sum:${sum}] + ${mod}`;
-
-        addLog(`${count}d${sides}${mod >= 0 ? '+' : ''}${mod}`, total, detailStr);
+        addLog(`${count}d${sides}${mod >= 0 ? '+' : ''}${mod}`, sum + mod, detailStr);
     }
 
-    // --- ログ管理 ---
+    // --- ログ・データ保存 ---
 
     function addLog(diceType, result, detail, styleClass = "") {
-        const charName = charNameInput.value || "No Name";
+        const charName = getCurrentCharName();
         const timestamp = new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
         
         const logEntry = {
@@ -380,28 +444,29 @@
         });
     }
 
-    function escapeHtml(str) {
-        if(!str) return "";
-        return str.replace(/[&<>"']/g, function(m) {
-            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
-        });
-    }
-
-    // --- データ永続化 (localStorage) ---
-
     function saveData() {
         localStorage.setItem('sw25_logs', JSON.stringify(logs));
-        localStorage.setItem('sw25_charName', charNameInput.value);
+        // キャラクター名リストも保存
+        localStorage.setItem('sw25_char_list', JSON.stringify(charList));
+        // 最後に選択していたキャラの位置も保存したい場合はここに追加可能
+        localStorage.setItem('sw25_last_char_idx', charSelect.value);
     }
 
     function loadData() {
         const savedLogs = localStorage.getItem('sw25_logs');
-        const savedName = localStorage.getItem('sw25_charName');
-        
+        const savedList = localStorage.getItem('sw25_char_list');
+        const lastIdx = localStorage.getItem('sw25_last_char_idx');
+
         if (savedLogs) logs = JSON.parse(savedLogs);
-        if (savedName) charNameInput.value = savedName;
+        if (savedList) charList = JSON.parse(savedList);
         
         renderLogs();
+        
+        // renderCharSelect後に値をセットするために、onload内で実行するが、
+        // ここでは変数に保持しておき renderCharSelect 内で使うか、直後に設定する
+        setTimeout(() => {
+            if(lastIdx) charSelect.value = lastIdx;
+        }, 0);
     }
 
     function clearLog() {
@@ -412,15 +477,12 @@
         }
     }
 
-    // --- ログダウンロード ---
     function downloadLog() {
         if (logs.length === 0) return;
-        
         let textContent = "Time\tCharacter\tDice\tResult\tDetail\n";
         logs.forEach(l => {
             textContent += `${l.time}\t${l.char}\t${l.dice}\t${l.result}\t${l.detail}\n`;
         });
-
         const blob = new Blob([textContent], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -429,25 +491,28 @@
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        URL.revokeObjectURL(url);
     }
 
-    // --- UI生成 (ページネーション) ---
+    function escapeHtml(str) {
+        if(!str) return "";
+        return str.replace(/[&<>"']/g, function(m) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+        });
+    }
 
+    // --- UI生成ヘルパー ---
     function renderPagination() {
         pagination.innerHTML = "";
         const pages = Math.ceil(TOTAL_MODS / PER_PAGE);
-        
         for (let i = 0; i < pages; i++) {
             const start = i * PER_PAGE + 1;
             const end = Math.min((i + 1) * PER_PAGE, TOTAL_MODS);
-            
             const btn = document.createElement('button');
             btn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
             btn.textContent = `+${start}~${end}`;
             btn.onclick = () => {
                 currentPage = i;
-                renderPagination(); // アクティブ状態更新
+                renderPagination();
                 renderModButtons(i);
             };
             pagination.appendChild(btn);
@@ -458,7 +523,6 @@
         modGrid.innerHTML = "";
         const start = pageIndex * PER_PAGE + 1;
         const end = Math.min((pageIndex + 1) * PER_PAGE, TOTAL_MODS);
-
         for (let i = start; i <= end; i++) {
             const btn = document.createElement('button');
             btn.className = "mod-btn";
@@ -467,7 +531,6 @@
             modGrid.appendChild(btn);
         }
     }
-
 </script>
 </body>
 </html>
