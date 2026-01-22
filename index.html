@@ -21,7 +21,7 @@
         display: flex; flex-direction: column; height: 100vh; overflow: hidden;
     }
 
-    /* キャラクター選択ボタンエリア */
+    /* ヘッダー・キャラクター選択 */
     header {
         background: var(--surface); padding: 10px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 10;
@@ -53,35 +53,24 @@
     }
     h3 { margin: 0; font-size: 16px; color: #555; }
 
-    /* ★ 2d6ボタンを巨大化 ★ */
+    /* 2d6ボタン */
     .main-roll-btn {
         background: var(--primary);
         color: white;
         border: none;
-        padding: 15px 40px; /* サイズを大きく */
+        padding: 15px 40px;
         border-radius: 40px;
         font-weight: bold;
-        font-size: 24px; /* 文字を大きく */
+        font-size: 24px;
         cursor: pointer;
         box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
-        display: flex;
-        flex-direction: column; /* 文字を上下に並べる */
-        align-items: center;
-        gap: 2px;
-        transition: transform 0.1s, background 0.1s;
+        display: flex; flex-direction: column; align-items: center;
+        gap: 2px; transition: transform 0.1s;
     }
-    .main-roll-btn:active {
-        transform: scale(0.95);
-        background: var(--primary-light);
-    }
-    .main-roll-btn span {
-        font-size: 12px;
-        font-weight: normal;
-        opacity: 0.9;
-        letter-spacing: 1px;
-    }
+    .main-roll-btn:active { transform: scale(0.95); background: var(--primary-light); }
+    .main-roll-btn span { font-size: 12px; font-weight: normal; opacity: 0.9; letter-spacing: 1px; }
 
-    /* 2d6+修正ボタン */
+    /* ページネーション */
     .pagination { display: flex; overflow-x: auto; gap: 5px; margin-bottom: 10px; padding-bottom: 5px; }
     .page-btn { padding: 6px 12px; border: 1px solid var(--primary); background: var(--surface); color: var(--primary); border-radius: 20px; white-space: nowrap; font-size: 13px; }
     .page-btn.active { background: var(--primary); color: white; }
@@ -89,9 +78,9 @@
     .mod-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
     .mod-btn { background: #e0f2fe; color: #0369a1; border: none; padding: 12px 0; border-radius: 8px; font-weight: bold; font-size: 14px; }
 
-    /* その他 */
+    /* その他ダイス */
     .custom-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
-    select, input[type="number"] { padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
+    select, input[type="number"] { padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; background: white; }
     .action-btn { background: var(--text); color: white; border: none; padding: 8px 16px; border-radius: 6px; }
 
     /* ログ */
@@ -137,14 +126,13 @@
     <div class="section">
         <h3>その他ダイス</h3>
         <div class="custom-row">
-            <select id="d100-select">
-                <option value="1d100">1d100 (通常)</option>
-                <option value="1d100+5">1d100+5</option>
-                <option value="1d100+10">1d100+10</option>
-            </select>
-            <button class="action-btn" onclick="rollD100()">振る</button>
+            <select id="any-dice-select" style="min-width: 100px;">
+                </select>
+            <button class="action-btn" onclick="rollAnyDice()">振る</button>
         </div>
+        
         <hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">
+        
         <div class="custom-row">
             <input type="number" id="customDiceCount" value="1" min="1" style="width: 50px;">
             <span>d</span>
@@ -185,6 +173,16 @@
         renderCharButtons();
         renderPagination();
         renderModButtons(0);
+        
+        // プルダウン生成 (1d1～1d100)
+        const select = document.getElementById('any-dice-select');
+        for(let i=1; i<=100; i++){
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = `1d${i}`;
+            if(i === 100) opt.selected = true; // デフォルト1d100
+            select.appendChild(opt);
+        }
     };
 
     function renderCharButtons() {
@@ -232,6 +230,8 @@
         return charList[type][idx];
     }
 
+    // --- ダイス機能 ---
+
     function roll2d6(mod) {
         const d1 = Math.floor(Math.random() * 6) + 1;
         const d2 = Math.floor(Math.random() * 6) + 1;
@@ -244,21 +244,26 @@
         addLog(diceText, sum + mod, `[${d1},${d2}]${mod === 0 ? '' : ' + ' + mod}${note}`, styleClass);
     }
 
-    function rollD100() {
-        const val = document.getElementById('d100-select').value;
-        const mod = val.includes('+') ? parseInt(val.split('+')[1]) : 0;
-        const res = Math.floor(Math.random() * 100) + 1;
-        addLog(val, res + mod, `[${res}] + ${mod}`);
+    // 1d1~1d100 プルダウン実行
+    function rollAnyDice() {
+        const sides = parseInt(document.getElementById('any-dice-select').value);
+        const res = Math.floor(Math.random() * sides) + 1;
+        addLog(`1d${sides}`, res, `[${res}]`);
     }
 
+    // カスタムダイス
     function rollCustom() {
         const c = parseInt(document.getElementById('customDiceCount').value) || 1;
         const s = parseInt(document.getElementById('customDiceSides').value) || 6;
         const m = parseInt(document.getElementById('customDiceMod').value) || 0;
         let rolls = []; let sum = 0;
         for(let i=0; i<c; i++) { let r = Math.floor(Math.random() * s) + 1; rolls.push(r); sum += r; }
-        addLog(`${c}d${s}${m >= 0 ? (m===0?'':'+'+m) : m}`, sum + m, `[${rolls.join(',')}] + ${m}`);
+        let detail = `[${rolls.join(',')}]`;
+        if(detail.length > 20) detail = `[Sum:${sum}]`;
+        addLog(`${c}d${s}${m >= 0 ? (m===0?'':'+'+m) : m}`, sum + m, `${detail}${m === 0 ? '' : ' + ' + m}`);
     }
+
+    // --- ログ管理 ---
 
     function addLog(diceType, result, detail, styleClass = "") {
         const log = {
