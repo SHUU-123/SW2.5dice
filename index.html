@@ -8,7 +8,8 @@
     :root {
         --primary: #3b82f6;
         --primary-dark: #2563eb;
-        --accent: #f59e0b;
+        --enemy-color: #ef4444;
+        --enemy-dark: #b91c1c;
         --bg: #f3f4f6;
         --surface: #ffffff;
         --text: #1f2937;
@@ -27,34 +28,69 @@
         overflow: hidden;
     }
 
-    /* ヘッダーエリア */
+    /* ヘッダーエリア: キャラクター選択ボタン */
     header {
         background: var(--surface);
         padding: 10px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        display: flex;
-        gap: 8px;
-        align-items: center;
         z-index: 10;
     }
-    .char-select-wrapper {
-        flex: 1;
+    .char-section {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .char-row {
         display: flex;
         gap: 5px;
+        overflow-x: auto;
+        padding-bottom: 2px;
     }
-    select.char-select {
+    .char-row span {
+        font-size: 11px;
+        color: #888;
+        min-width: 25px;
+        display: flex;
+        align-items: center;
+    }
+    .char-btn {
         flex: 1;
-        padding: 8px;
-        font-size: 16px;
-        border: 1px solid #ccc;
+        min-width: 60px;
+        padding: 8px 4px;
+        font-size: 13px;
+        border: 2px solid #e5e7eb;
         border-radius: 8px;
         background: white;
+        cursor: pointer;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+    /* PC選択時 */
+    .char-btn.pc-btn.active {
+        border-color: var(--primary);
+        background: #eff6ff;
+        color: var(--primary);
+        font-weight: bold;
+    }
+    /* 敵選択時 */
+    .char-btn.enemy-btn.active {
+        border-color: var(--enemy-color);
+        background: #fef2f2;
+        color: var(--enemy-color);
+        font-weight: bold;
+    }
+
+    .header-controls {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 8px;
     }
     button.rename-btn {
-        padding: 8px 12px;
-        background: #e5e7eb;
+        padding: 4px 12px;
+        background: #f9fafb;
         border: 1px solid #ccc;
-        border-radius: 8px;
+        border-radius: 6px;
         font-size: 12px;
         cursor: pointer;
     }
@@ -64,10 +100,8 @@
         flex: 1;
         overflow-y: auto;
         padding: 10px;
-        padding-bottom: 40px;
     }
 
-    /* セクション */
     .section {
         background: var(--surface);
         padding: 15px;
@@ -76,7 +110,6 @@
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     
-    /* セクションヘッダー（タイトルとボタンを横並びにする） */
     .section-header {
         display: flex;
         justify-content: space-between;
@@ -85,7 +118,6 @@
     }
     h3 { margin: 0; font-size: 16px; color: #555; }
 
-    /* メイン2d6ボタン（指定位置へ移動） */
     .main-roll-btn {
         background: var(--primary);
         color: white;
@@ -100,17 +132,9 @@
         align-items: center;
         gap: 5px;
     }
-    .main-roll-btn:active {
-        background: var(--primary-dark);
-        transform: translateY(1px);
-    }
-    .main-roll-btn span {
-        font-size: 12px;
-        font-weight: normal;
-        opacity: 0.9;
-    }
+    .main-roll-btn span { font-size: 12px; font-weight: normal; opacity: 0.9; }
 
-    /* ページネーション */
+    /* 2d6+修正ボタン */
     .pagination {
         display: flex;
         overflow-x: auto;
@@ -125,13 +149,9 @@
         color: var(--primary);
         border-radius: 20px;
         white-space: nowrap;
-        cursor: pointer;
-        font-size: 14px;
+        font-size: 13px;
     }
-    .page-btn.active {
-        background: var(--primary);
-        color: white;
-    }
+    .page-btn.active { background: var(--primary); color: white; }
     
     .mod-grid {
         display: grid;
@@ -142,83 +162,50 @@
         background: #e0f2fe;
         color: #0369a1;
         border: none;
-        padding: 10px 0;
+        padding: 12px 0;
         border-radius: 8px;
         font-weight: bold;
         font-size: 14px;
-        cursor: pointer;
-    }
-    .mod-btn:active { background: #bae6fd; }
-
-    /* その他ダイス */
-    .custom-row {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-    select, input[type="number"] {
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-        font-size: 16px;
-    }
-    .action-btn {
-        background: var(--text);
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 6px;
-        cursor: pointer;
     }
 
-    /* ログ表示 */
-    #log-container {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
+    /* その他 */
+    .custom-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+    select, input[type="number"] { padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
+    .action-btn { background: var(--text); color: white; border: none; padding: 8px 16px; border-radius: 6px; }
+
+    /* ログ */
     .log-entry {
         border-left: 4px solid #ccc;
         padding: 8px 12px;
         background: #f9fafb;
+        margin-bottom: 8px;
         border-radius: 0 4px 4px 0;
-        font-size: 14px;
         display: flex;
         justify-content: space-between;
         align-items: center;
     }
     .log-entry.crit { border-left-color: var(--crit); background: #d1fae5; }
     .log-entry.fumble { border-left-color: var(--fumble); background: #fee2e2; }
-    
-    .log-header { font-size: 12px; color: #666; margin-bottom: 2px; }
-    .log-result { font-weight: bold; font-size: 16px; }
+    .log-header { font-size: 12px; color: #666; }
+    .log-result { font-weight: bold; font-size: 18px; }
     .log-detail { font-size: 12px; color: #888; }
-    
-    .log-controls {
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-        margin-top: 10px;
-    }
-    .text-btn {
-        background: none;
-        border: none;
-        color: var(--primary);
-        font-size: 14px;
-        cursor: pointer;
-        text-decoration: underline;
-    }
+    .text-btn { background: none; border: none; color: var(--primary); font-size: 14px; text-decoration: underline; margin-left: 10px;}
     .text-btn.danger { color: var(--fumble); }
 </style>
 </head>
 <body>
 
 <header>
-    <div class="char-select-wrapper">
-        <select id="charSelect" class="char-select">
-            </select>
-        <button class="rename-btn" onclick="renameCharacter()">名前変更</button>
+    <div class="char-section">
+        <div class="char-row" id="pcRow">
+            <span>PC</span>
+            </div>
+        <div class="char-row" id="enemyRow">
+            <span>敵</span>
+            </div>
+    </div>
+    <div class="header-controls">
+        <button class="rename-btn" onclick="renameCharacter()">選択中の名前を変更</button>
     </div>
 </header>
 
@@ -230,7 +217,6 @@
                 2d6 <span>(平目)</span>
             </button>
         </div>
-
         <div class="pagination" id="pagination"></div>
         <div class="mod-grid" id="modGrid"></div>
     </div>
@@ -259,98 +245,84 @@
     <div class="section">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <h3>履歴</h3>
-            <div class="log-controls">
-                <button class="text-btn" onclick="downloadLog()">保存(DL)</button>
+            <div>
+                <button class="text-btn" onclick="downloadLog()">保存</button>
                 <button class="text-btn danger" onclick="clearLog()">削除</button>
             </div>
         </div>
-        <div id="log-container">
-            <div style="text-align:center; color:#999; padding:20px;">履歴はありません</div>
-        </div>
+        <div id="log-container"></div>
     </div>
 </main>
 
 <script>
-    // --- 初期設定 ---
     const TOTAL_MODS = 100;
     const PER_PAGE = 20;
     let currentPage = 0;
     let logs = [];
     const MAX_LOGS = 100;
 
-    const DEFAULT_CHAR_LIST = {
+    // キャラクターデータ
+    let charList = {
         pc: ["PC1", "PC2", "PC3", "PC4", "PC5"],
-        enemy: ["Enemy1", "Enemy2", "Enemy3", "Enemy4"]
+        enemy: ["敵1", "敵2", "敵3", "敵4"]
     };
-    let charList = JSON.parse(JSON.stringify(DEFAULT_CHAR_LIST));
-
-    const charSelect = document.getElementById('charSelect');
-    const logContainer = document.getElementById('log-container');
-    const pagination = document.getElementById('pagination');
-    const modGrid = document.getElementById('modGrid');
+    let selectedCharId = "pc-0"; // 初期選択
 
     window.onload = function() {
         loadData();
-        renderCharSelect();
+        renderCharButtons();
         renderPagination();
         renderModButtons(0);
     };
 
-    // --- キャラクター管理機能 ---
-    function renderCharSelect() {
-        const currentVal = charSelect.value;
-        charSelect.innerHTML = "";
-
-        const optGroupPC = document.createElement('optgroup');
-        optGroupPC.label = "プレイヤーキャラクター";
-        charList.pc.forEach((name, index) => {
-            const opt = document.createElement('option');
-            opt.value = `pc-${index}`;
-            opt.textContent = name;
-            optGroupPC.appendChild(opt);
+    // --- キャラクターボタン生成 ---
+    function renderCharButtons() {
+        const pcRow = document.getElementById('pcRow');
+        const enemyRow = document.getElementById('enemyRow');
+        
+        // PCボタン
+        pcRow.innerHTML = '<span>PC</span>';
+        charList.pc.forEach((name, i) => {
+            const id = `pc-${i}`;
+            const btn = document.createElement('button');
+            btn.className = `char-btn pc-btn ${selectedCharId === id ? 'active' : ''}`;
+            btn.textContent = name;
+            btn.onclick = () => selectChar(id);
+            pcRow.appendChild(btn);
         });
-        charSelect.appendChild(optGroupPC);
 
-        const optGroupEnemy = document.createElement('optgroup');
-        optGroupEnemy.label = "敵キャラクター";
-        charList.enemy.forEach((name, index) => {
-            const opt = document.createElement('option');
-            opt.value = `enemy-${index}`;
-            opt.textContent = name;
-            optGroupEnemy.appendChild(opt);
+        // 敵ボタン
+        enemyRow.innerHTML = '<span>敵</span>';
+        charList.enemy.forEach((name, i) => {
+            const id = `enemy-${i}`;
+            const btn = document.createElement('button');
+            btn.className = `char-btn enemy-btn ${selectedCharId === id ? 'active' : ''}`;
+            btn.textContent = name;
+            btn.onclick = () => selectChar(id);
+            enemyRow.appendChild(btn);
         });
-        charSelect.appendChild(optGroupEnemy);
+    }
 
-        if (currentVal) {
-            const exists = Array.from(charSelect.options).some(o => o.value === currentVal);
-            if(exists) charSelect.value = currentVal;
-        }
+    function selectChar(id) {
+        selectedCharId = id;
+        renderCharButtons();
+        saveData();
     }
 
     function renameCharacter() {
-        const selectedOption = charSelect.options[charSelect.selectedIndex];
-        if (!selectedOption) return;
-
-        const [type, indexStr] = selectedOption.value.split('-');
-        const index = parseInt(indexStr);
-        const currentName = selectedOption.textContent;
-
-        const newName = prompt("キャラクター名を入力してください:", currentName);
+        const [type, idx] = selectedCharId.split('-');
+        const currentName = charList[type][idx];
+        const newName = prompt("名前を入力してください:", currentName);
         if (newName && newName.trim() !== "") {
-            if (type === 'pc') {
-                charList.pc[index] = newName.trim();
-            } else {
-                charList.enemy[index] = newName.trim();
-            }
+            charList[type][idx] = newName.trim();
             saveData();
-            renderCharSelect();
-            charSelect.value = selectedOption.value;
+            renderCharButtons();
         }
     }
 
     function getCurrentCharName() {
-        const selectedOption = charSelect.options[charSelect.selectedIndex];
-        return selectedOption ? selectedOption.textContent : "Unknown";
+        const [type, idx] = selectedCharId.split('-');
+        return charList[type][idx];
     }
 
     // --- ダイス機能 ---
@@ -358,172 +330,104 @@
         const d1 = Math.floor(Math.random() * 6) + 1;
         const d2 = Math.floor(Math.random() * 6) + 1;
         const sum = d1 + d2;
-        const total = sum + mod;
-
         let note = "";
         let styleClass = "";
-        if (sum === 12) {
-            note = " (自動成功/運命変転)";
-            styleClass = "crit";
-        } else if (sum === 2) {
-            note = " (自動失敗)";
-            styleClass = "fumble";
-        }
-
-        const text = `2d6${mod >= 0 ? (mod===0?'':'+') : ''}${mod===0?'':mod}`;
-        const detail = `[${d1},${d2}]${mod===0?'':' + '+mod}`;
-        addLog(text, total, detail + note, styleClass);
+        if (sum === 12) { note = " (自動成功)"; styleClass = "crit"; }
+        else if (sum === 2) { note = " (自動失敗)"; styleClass = "fumble"; }
+        
+        const diceText = `2d6${mod === 0 ? '' : (mod > 0 ? '+' + mod : mod)}`;
+        addLog(diceText, sum + mod, `[${d1},${d2}]${mod === 0 ? '' : ' + ' + mod}${note}`, styleClass);
     }
 
     function rollD100() {
-        const select = document.getElementById('d100-select');
-        const val = select.value;
-        const parts = val.split('+');
-        const mod = parts.length > 1 ? parseInt(parts[1]) : 0;
+        const val = document.getElementById('d100-select').value;
+        const mod = val.includes('+') ? parseInt(val.split('+')[1]) : 0;
         const res = Math.floor(Math.random() * 100) + 1;
         addLog(val, res + mod, `[${res}] + ${mod}`);
     }
 
     function rollCustom() {
-        const count = parseInt(document.getElementById('customDiceCount').value) || 1;
-        const sides = parseInt(document.getElementById('customDiceSides').value) || 6;
-        const mod = parseInt(document.getElementById('customDiceMod').value) || 0;
-
+        const c = parseInt(document.getElementById('customDiceCount').value) || 1;
+        const s = parseInt(document.getElementById('customDiceSides').value) || 6;
+        const m = parseInt(document.getElementById('customDiceMod').value) || 0;
         let rolls = [];
         let sum = 0;
-        for(let i=0; i<count; i++) {
-            const r = Math.floor(Math.random() * sides) + 1;
-            rolls.push(r);
-            sum += r;
-        }
-        let detailStr = `[${rolls.join(',')}]${mod===0?'':' + '+mod}`;
-        if (detailStr.length > 20) detailStr = `[Sum:${sum}]${mod===0?'':' + '+mod}`;
-        addLog(`${count}d${sides}${mod >= 0 ? (mod===0?'':'+') : ''}${mod===0?'':mod}`, sum + mod, detailStr);
+        for(let i=0; i<c; i++) { let r = Math.floor(Math.random() * s) + 1; rolls.push(r); sum += r; }
+        addLog(`${c}d${s}${m >= 0 ? (m===0?'':'+'+m) : m}`, sum + m, `[${rolls.join(',')}] + ${m}`);
     }
 
-    // --- ログ・保存機能 ---
+    // --- ログ・データ管理 ---
     function addLog(diceType, result, detail, styleClass = "") {
-        const charName = getCurrentCharName();
-        const timestamp = new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
-        
-        const logEntry = {
-            id: Date.now(),
-            time: timestamp,
-            char: charName,
+        const log = {
+            time: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
+            char: getCurrentCharName(),
             dice: diceType,
             result: result,
             detail: detail,
             style: styleClass
         };
-
-        logs.unshift(logEntry);
+        logs.unshift(log);
         if (logs.length > MAX_LOGS) logs.pop();
-        
         saveData();
         renderLogs();
     }
 
     function renderLogs() {
-        logContainer.innerHTML = "";
-        if (logs.length === 0) {
-            logContainer.innerHTML = '<div style="text-align:center; color:#999; padding:20px;">履歴はありません</div>';
-            return;
-        }
-
-        logs.forEach(log => {
+        const container = document.getElementById('log-container');
+        container.innerHTML = logs.length ? "" : '<div style="text-align:center; color:#999; padding:20px;">履歴なし</div>';
+        logs.forEach(l => {
             const div = document.createElement('div');
-            div.className = `log-entry ${log.style}`;
-            div.innerHTML = `
-                <div>
-                    <div class="log-header">${log.time} : ${escapeHtml(log.char)} (${log.dice})</div>
-                    <div class="log-detail">${log.detail}</div>
-                </div>
-                <div class="log-result">${log.result}</div>
-            `;
-            logContainer.appendChild(div);
+            div.className = `log-entry ${l.style}`;
+            div.innerHTML = `<div><div class="log-header">${l.time} : ${l.char} (${l.dice})</div><div class="log-detail">${l.detail}</div></div><div class="log-result">${l.result}</div>`;
+            container.appendChild(div);
         });
     }
 
     function saveData() {
         localStorage.setItem('sw25_logs', JSON.stringify(logs));
-        localStorage.setItem('sw25_char_list', JSON.stringify(charList));
-        localStorage.setItem('sw25_last_char_idx', charSelect.value);
+        localStorage.setItem('sw25_chars', JSON.stringify(charList));
+        localStorage.setItem('sw25_selected', selectedCharId);
     }
 
     function loadData() {
-        const savedLogs = localStorage.getItem('sw25_logs');
-        const savedList = localStorage.getItem('sw25_char_list');
-        const lastIdx = localStorage.getItem('sw25_last_char_idx');
-
-        if (savedLogs) logs = JSON.parse(savedLogs);
-        if (savedList) charList = JSON.parse(savedList);
-        
+        logs = JSON.parse(localStorage.getItem('sw25_logs') || "[]");
+        charList = JSON.parse(localStorage.getItem('sw25_chars') || JSON.stringify(charList));
+        selectedCharId = localStorage.getItem('sw25_selected') || "pc-0";
         renderLogs();
-        
-        setTimeout(() => {
-            if(lastIdx) charSelect.value = lastIdx;
-        }, 0);
     }
 
-    function clearLog() {
-        if(confirm("ログを全て削除しますか？")) {
-            logs = [];
-            saveData();
-            renderLogs();
-        }
-    }
+    function clearLog() { if(confirm("消去しますか？")) { logs = []; saveData(); renderLogs(); } }
 
     function downloadLog() {
-        if (logs.length === 0) return;
-        let textContent = "Time\tCharacter\tDice\tResult\tDetail\n";
-        logs.forEach(l => {
-            textContent += `${l.time}\t${l.char}\t${l.dice}\t${l.result}\t${l.detail}\n`;
-        });
-        const blob = new Blob([textContent], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
+        let text = logs.map(l => `${l.time} [${l.char}] ${l.dice} -> ${l.result} (${l.detail})`).join('\n');
+        const blob = new Blob([text], { type: 'text/plain' });
         const a = document.createElement('a');
-        a.href = url;
-        a.download = `sw25_log_${new Date().toISOString().slice(0,10)}.txt`;
-        document.body.appendChild(a);
+        a.href = URL.createObjectURL(blob);
+        a.download = `log_${new Date().toISOString().slice(0,10)}.txt`;
         a.click();
-        document.body.removeChild(a);
-    }
-
-    function escapeHtml(str) {
-        if(!str) return "";
-        return str.replace(/[&<>"']/g, function(m) {
-            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
-        });
     }
 
     function renderPagination() {
-        pagination.innerHTML = "";
-        const pages = Math.ceil(TOTAL_MODS / PER_PAGE);
-        for (let i = 0; i < pages; i++) {
-            const start = i * PER_PAGE + 1;
-            const end = Math.min((i + 1) * PER_PAGE, TOTAL_MODS);
+        const pag = document.getElementById('pagination');
+        pag.innerHTML = "";
+        for (let i = 0; i < Math.ceil(TOTAL_MODS / PER_PAGE); i++) {
             const btn = document.createElement('button');
             btn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
-            btn.textContent = `+${start}~${end}`;
-            btn.onclick = () => {
-                currentPage = i;
-                renderPagination();
-                renderModButtons(i);
-            };
-            pagination.appendChild(btn);
+            btn.textContent = `+${i * PER_PAGE + 1}~`;
+            btn.onclick = () => { currentPage = i; renderPagination(); renderModButtons(i); };
+            pag.appendChild(btn);
         }
     }
 
-    function renderModButtons(pageIndex) {
-        modGrid.innerHTML = "";
-        const start = pageIndex * PER_PAGE + 1;
-        const end = Math.min((pageIndex + 1) * PER_PAGE, TOTAL_MODS);
-        for (let i = start; i <= end; i++) {
+    function renderModButtons(idx) {
+        const grid = document.getElementById('modGrid');
+        grid.innerHTML = "";
+        for (let i = idx * PER_PAGE + 1; i <= Math.min((idx + 1) * PER_PAGE, TOTAL_MODS); i++) {
             const btn = document.createElement('button');
             btn.className = "mod-btn";
             btn.textContent = `+${i}`;
             btn.onclick = () => roll2d6(i);
-            modGrid.appendChild(btn);
+            grid.appendChild(btn);
         }
     }
 </script>
