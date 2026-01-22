@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SW2.5 Dice Roller</title>
+<style>
+    :root {
+        --primary: #3b82f6;
+        --accent: #f59e0b;
+        --bg: #f3f4f6;
+        --surface: #ffffff;
+        --text: #1f2937;
+        --fumble: #ef4444;
+        --crit: #10b981;
+    }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: var(--bg);
+        color: var(--text);
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    /* ヘッダーエリア */
+    header {
+        background: var(--surface);
+        padding: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        z-index: 10;
+    }
+    input.char-name {
+        flex: 1;
+        padding: 8px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+    }
+
+    /* メインエリア（スクロール可能） */
+    main {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+        padding-bottom: 80px; /* 固定ボタンのスペース確保 */
+    }
+
+    /* セクションスタイル */
+    .section {
+        background: var(--surface);
+        padding: 15px;
+        border-radius: 12px;
+        margin-bottom: 15px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    h3 { margin: 0 0 10px 0; font-size: 16px; color: #555; }
+
+    /* 固定2d6ボタン (画面右下に常に表示) */
+    .fixed-roll-btn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        font-weight: bold;
+        font-size: 18px;
+        border: none;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        cursor: pointer;
+        transition: transform 0.1s;
+    }
+    .fixed-roll-btn:active { transform: scale(0.95); }
+    .fixed-roll-btn span { font-size: 12px; font-weight: normal; opacity: 0.9; }
+
+    /* ページ切り替えボタングリッド */
+    .pagination {
+        display: flex;
+        overflow-x: auto;
+        gap: 5px;
+        margin-bottom: 10px;
+        padding-bottom: 5px;
+    }
+    .page-btn {
+        padding: 6px 12px;
+        border: 1px solid var(--primary);
+        background: var(--surface);
+        color: var(--primary);
+        border-radius: 20px;
+        white-space: nowrap;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    .page-btn.active {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .mod-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+    }
+    .mod-btn {
+        background: #e0f2fe;
+        color: #0369a1;
+        border: none;
+        padding: 10px 0;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 14px;
+        cursor: pointer;
+    }
+    .mod-btn:active { background: #bae6fd; }
+
+    /* その他ダイス */
+    .custom-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    select, input[type="number"] {
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 16px;
+    }
+    .action-btn {
+        background: var(--text);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+    /* ログ表示 */
+    #log-container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .log-entry {
+        border-left: 4px solid #ccc;
+        padding: 8px 12px;
+        background: #f9fafb;
+        border-radius: 0 4px 4px 0;
+        font-size: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .log-entry.crit { border-left-color: var(--crit); background: #d1fae5; }
+    .log-entry.fumble { border-left-color: var(--fumble); background: #fee2e2; }
+    
+    .log-header { font-size: 12px; color: #666; margin-bottom: 2px; }
+    .log-result { font-weight: bold; font-size: 16px; }
+    .log-detail { font-size: 12px; color: #888; }
+    
+    /* ログ操作ボタン */
+    .log-controls {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 10px;
+    }
+    .text-btn {
+        background: none;
+        border: none;
+        color: var(--primary);
+        font-size: 14px;
+        cursor: pointer;
+        text-decoration: underline;
+    }
+    .text-btn.danger { color: var(--fumble); }
+
+</style>
+</head>
+<body>
+
+<header>
+    <label for="charName">PC名:</label>
+    <input type="text" id="charName" class="char-name" placeholder="キャラクター名を入力">
+</header>
+
+<main>
+    <div class="section">
+        <h3>威力・判定 (2d6 + 修正)</h3>
+        <div class="pagination" id="pagination">
+            </div>
+        <div class="mod-grid" id="modGrid">
+            </div>
+    </div>
+
+    <div class="section">
+        <h3>その他ダイス</h3>
+        
+        <div class="custom-row">
+            <select id="d100-select">
+                <option value="1d100">1d100 (通常)</option>
+                <option value="1d100+5">1d100+5</option>
+                <option value="1d100+10">1d100+10</option>
+            </select>
+            <button class="action-btn" onclick="rollD100()">振る</button>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">
+
+        <div class="custom-row">
+            <input type="number" id="customDiceCount" value="1" min="1" style="width: 50px;">
+            <span>d</span>
+            <input type="number" id="customDiceSides" value="6" min="2" style="width: 50px;">
+            <span>+</span>
+            <input type="number" id="customDiceMod" value="0" style="width: 50px;">
+            <button class="action-btn" onclick="rollCustom()">振る</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3>履歴</h3>
+            <div class="log-controls">
+                <button class="text-btn" onclick="downloadLog()">保存(DL)</button>
+                <button class="text-btn danger" onclick="clearLog()">削除</button>
+            </div>
+        </div>
+        <div id="log-container">
+            <div style="text-align:center; color:#999; padding:20px;">履歴はありません</div>
+        </div>
+    </div>
+</main>
+
+<button class="fixed-roll-btn" onclick="roll2d6(0)">
+    2d6
+    <span>平目</span>
+</button>
+
+<script>
+    // --- 初期化処理 ---
+    const modGrid = document.getElementById('modGrid');
+    const pagination = document.getElementById('pagination');
+    const logContainer = document.getElementById('log-container');
+    const charNameInput = document.getElementById('charName');
+
+    // ログデータ保持用
+    let logs = [];
+    const MAX_LOGS = 100;
+
+    // ページ設定
+    const TOTAL_MODS = 100;
+    const PER_PAGE = 20;
+    let currentPage = 0;
+
+    // 起動時
+    window.onload = function() {
+        renderPagination();
+        renderModButtons(0);
+        loadData();
+    };
+
+    // --- ダイスロジック ---
+
+    // 2d6 + 修正
+    function roll2d6(mod) {
+        const d1 = Math.floor(Math.random() * 6) + 1;
+        const d2 = Math.floor(Math.random() * 6) + 1;
+        const sum = d1 + d2;
+        const total = sum + mod;
+
+        // SW2.5的判定
+        let note = "";
+        let styleClass = "";
+        if (sum === 12) {
+            note = " (自動成功/運命変転)";
+            styleClass = "crit";
+        } else if (sum === 2) {
+            note = " (自動失敗)";
+            styleClass = "fumble";
+        }
+
+        const text = `2d6${mod >= 0 ? '+' : ''}${mod}`;
+        const detail = `[${d1},${d2}] + ${mod}`;
+        
+        addLog(text, total, detail + note, styleClass);
+    }
+
+    // 1d100 (プルダウン)
+    function rollD100() {
+        const select = document.getElementById('d100-select');
+        const val = select.value; // "1d100" or "1d100+5" etc
+        
+        // 解析
+        const parts = val.split('+');
+        const mod = parts.length > 1 ? parseInt(parts[1]) : 0;
+        
+        const res = Math.floor(Math.random() * 100) + 1;
+        const total = res + mod;
+
+        addLog(val, total, `[${res}] + ${mod}`);
+    }
+
+    // カスタムダイス
+    function rollCustom() {
+        const count = parseInt(document.getElementById('customDiceCount').value) || 1;
+        const sides = parseInt(document.getElementById('customDiceSides').value) || 6;
+        const mod = parseInt(document.getElementById('customDiceMod').value) || 0;
+
+        let rolls = [];
+        let sum = 0;
+        for(let i=0; i<count; i++) {
+            const r = Math.floor(Math.random() * sides) + 1;
+            rolls.push(r);
+            sum += r;
+        }
+        const total = sum + mod;
+        
+        // 詳細が長すぎる場合は省略
+        let detailStr = `[${rolls.join(',')}] + ${mod}`;
+        if (detailStr.length > 20) detailStr = `[Sum:${sum}] + ${mod}`;
+
+        addLog(`${count}d${sides}${mod >= 0 ? '+' : ''}${mod}`, total, detailStr);
+    }
+
+    // --- ログ管理 ---
+
+    function addLog(diceType, result, detail, styleClass = "") {
+        const charName = charNameInput.value || "No Name";
+        const timestamp = new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+        
+        const logEntry = {
+            id: Date.now(),
+            time: timestamp,
+            char: charName,
+            dice: diceType,
+            result: result,
+            detail: detail,
+            style: styleClass
+        };
+
+        logs.unshift(logEntry);
+        if (logs.length > MAX_LOGS) logs.pop();
+        
+        saveData();
+        renderLogs();
+    }
+
+    function renderLogs() {
+        logContainer.innerHTML = "";
+        if (logs.length === 0) {
+            logContainer.innerHTML = '<div style="text-align:center; color:#999; padding:20px;">履歴はありません</div>';
+            return;
+        }
+
+        logs.forEach(log => {
+            const div = document.createElement('div');
+            div.className = `log-entry ${log.style}`;
+            div.innerHTML = `
+                <div>
+                    <div class="log-header">${log.time} : ${escapeHtml(log.char)} (${log.dice})</div>
+                    <div class="log-detail">${log.detail}</div>
+                </div>
+                <div class="log-result">${log.result}</div>
+            `;
+            logContainer.appendChild(div);
+        });
+    }
+
+    function escapeHtml(str) {
+        if(!str) return "";
+        return str.replace(/[&<>"']/g, function(m) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+        });
+    }
+
+    // --- データ永続化 (localStorage) ---
+
+    function saveData() {
+        localStorage.setItem('sw25_logs', JSON.stringify(logs));
+        localStorage.setItem('sw25_charName', charNameInput.value);
+    }
+
+    function loadData() {
+        const savedLogs = localStorage.getItem('sw25_logs');
+        const savedName = localStorage.getItem('sw25_charName');
+        
+        if (savedLogs) logs = JSON.parse(savedLogs);
+        if (savedName) charNameInput.value = savedName;
+        
+        renderLogs();
+    }
+
+    function clearLog() {
+        if(confirm("ログを全て削除しますか？")) {
+            logs = [];
+            saveData();
+            renderLogs();
+        }
+    }
+
+    // --- ログダウンロード ---
+    function downloadLog() {
+        if (logs.length === 0) return;
+        
+        let textContent = "Time\tCharacter\tDice\tResult\tDetail\n";
+        logs.forEach(l => {
+            textContent += `${l.time}\t${l.char}\t${l.dice}\t${l.result}\t${l.detail}\n`;
+        });
+
+        const blob = new Blob([textContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `sw25_log_${new Date().toISOString().slice(0,10)}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    // --- UI生成 (ページネーション) ---
+
+    function renderPagination() {
+        pagination.innerHTML = "";
+        const pages = Math.ceil(TOTAL_MODS / PER_PAGE);
+        
+        for (let i = 0; i < pages; i++) {
+            const start = i * PER_PAGE + 1;
+            const end = Math.min((i + 1) * PER_PAGE, TOTAL_MODS);
+            
+            const btn = document.createElement('button');
+            btn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+            btn.textContent = `+${start}~${end}`;
+            btn.onclick = () => {
+                currentPage = i;
+                renderPagination(); // アクティブ状態更新
+                renderModButtons(i);
+            };
+            pagination.appendChild(btn);
+        }
+    }
+
+    function renderModButtons(pageIndex) {
+        modGrid.innerHTML = "";
+        const start = pageIndex * PER_PAGE + 1;
+        const end = Math.min((pageIndex + 1) * PER_PAGE, TOTAL_MODS);
+
+        for (let i = start; i <= end; i++) {
+            const btn = document.createElement('button');
+            btn.className = "mod-btn";
+            btn.textContent = `+${i}`;
+            btn.onclick = () => roll2d6(i);
+            modGrid.appendChild(btn);
+        }
+    }
+
+</script>
+</body>
+</html>
