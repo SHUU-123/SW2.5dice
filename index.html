@@ -21,24 +21,16 @@
         display: flex; flex-direction: column; height: 100vh; overflow: hidden;
     }
 
-    /* ヘッダー・キャラクター選択 */
+    /* ヘッダー（名前編集用） */
     header {
         background: var(--surface); padding: 10px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 10;
+        display: flex; justify-content: flex-end;
     }
-    .char-section { display: flex; flex-direction: column; gap: 8px; }
-    .char-row { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 2px; }
-    .char-row span { font-size: 11px; color: #888; min-width: 25px; display: flex; align-items: center; }
-    .char-btn {
-        flex: 1; min-width: 60px; padding: 8px 4px; font-size: 13px;
-        border: 2px solid #e5e7eb; border-radius: 8px; background: white;
-        cursor: pointer; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;
+    button.rename-btn { 
+        padding: 6px 12px; background: #f9fafb; border: 1px solid #ccc; 
+        border-radius: 6px; font-size: 12px; color: #555;
     }
-    .char-btn.pc-btn.active { border-color: var(--primary); background: #eff6ff; color: var(--primary); font-weight: bold; }
-    .char-btn.enemy-btn.active { border-color: var(--enemy-color); background: #fef2f2; color: var(--enemy-color); font-weight: bold; }
-
-    .header-controls { display: flex; justify-content: flex-end; margin-top: 8px; }
-    button.rename-btn { padding: 4px 12px; background: #f9fafb; border: 1px solid #ccc; border-radius: 6px; font-size: 12px; }
 
     /* メインエリア */
     main { flex: 1; overflow-y: auto; padding: 10px; }
@@ -56,13 +48,8 @@
     /* 2d6ボタン */
     .main-roll-btn {
         background: var(--primary);
-        color: white;
-        border: none;
-        padding: 15px 40px;
-        border-radius: 40px;
-        font-weight: bold;
-        font-size: 24px;
-        cursor: pointer;
+        color: white; border: none; padding: 15px 40px; border-radius: 40px;
+        font-weight: bold; font-size: 24px; cursor: pointer;
         box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
         display: flex; flex-direction: column; align-items: center;
         gap: 2px; transition: transform 0.1s;
@@ -88,33 +75,71 @@
         border-left: 4px solid #ccc; padding: 8px 12px; background: #f9fafb;
         margin-bottom: 8px; border-radius: 0 4px 4px 0;
         display: flex; justify-content: space-between; align-items: center;
+        position: relative;
     }
     .log-entry.crit { border-left-color: var(--crit); background: #d1fae5; }
     .log-entry.fumble { border-left-color: var(--fumble); background: #fee2e2; }
-    .log-header { font-size: 12px; color: #666; }
-    .log-result { font-weight: bold; font-size: 20px; }
+    
+    .log-content { flex-grow: 1; }
+    .log-header { font-size: 11px; color: #666; margin-bottom: 2px; }
     .log-detail { font-size: 12px; color: #888; }
-    .text-btn { background: none; border: none; color: var(--primary); font-size: 14px; text-decoration: underline; margin-left: 10px;}
+    
+    .log-right { display: flex; align-items: center; gap: 15px; }
+    .log-result { font-weight: bold; font-size: 22px; min-width: 30px; text-align: right; }
+    
+    .del-entry-btn {
+        background: #eee; color: #999; border: none; width: 24px; height: 24px;
+        border-radius: 50%; font-size: 16px; cursor: pointer; display: flex;
+        align-items: center; justify-content: center; line-height: 1;
+    }
+    .del-entry-btn:hover { background: #ddd; color: #666; }
+
+    .text-btn { background: none; border: none; color: var(--primary); font-size: 14px; text-decoration: underline; margin-left: 10px; cursor: pointer; }
     .text-btn.danger { color: var(--fumble); }
+
+    /* --- モーダル (キャラクター選択) --- */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5); z-index: 100;
+        display: none; justify-content: center; align-items: center;
+    }
+    .modal-content {
+        background: white; width: 90%; max-width: 400px;
+        border-radius: 12px; padding: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        animation: fadeIn 0.2s ease-out;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    
+    .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; text-align: center; }
+    .char-select-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+    
+    .modal-char-btn {
+        padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px;
+        background: white; font-weight: bold; cursor: pointer;
+        text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .modal-char-btn.pc { border-color: var(--primary-light); color: var(--primary); background: #eff6ff; }
+    .modal-char-btn.enemy { border-color: var(--fumble); color: var(--fumble); background: #fef2f2; }
+    
+    .modal-close {
+        width: 100%; padding: 12px; background: #eee; border: none;
+        border-radius: 8px; font-size: 14px; color: #555; cursor: pointer;
+    }
+
 </style>
 </head>
 <body>
 
 <header>
-    <div class="char-section">
-        <div class="char-row" id="pcRow"><span>PC</span></div>
-        <div class="char-row" id="enemyRow"><span>敵</span></div>
-    </div>
-    <div class="header-controls">
-        <button class="rename-btn" onclick="renameCharacter()">選択中の名前を変更</button>
-    </div>
+    <button class="rename-btn" onclick="openRenameTool()">キャラクター名編集</button>
 </header>
 
 <main>
     <div class="section">
         <div class="section-header">
             <h3>威力・判定</h3>
-            <button class="main-roll-btn" onclick="roll2d6(0)">
+            <button class="main-roll-btn" onclick="startRoll('2d6', 0)">
                 2d6
                 <span>(平目)</span>
             </button>
@@ -126,34 +151,39 @@
     <div class="section">
         <h3>その他ダイス</h3>
         <div class="custom-row">
-            <select id="any-dice-select" style="min-width: 100px;">
-                </select>
-            <button class="action-btn" onclick="rollAnyDice()">振る</button>
+            <select id="any-dice-select" style="min-width: 100px;"></select>
+            <button class="action-btn" onclick="startRoll('any')">振る</button>
         </div>
-        
         <hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">
-        
         <div class="custom-row">
             <input type="number" id="customDiceCount" value="1" min="1" style="width: 50px;">
             <span>d</span>
             <input type="number" id="customDiceSides" value="6" min="2" style="width: 50px;">
             <span>+</span>
             <input type="number" id="customDiceMod" value="0" style="width: 50px;">
-            <button class="action-btn" onclick="rollCustom()">振る</button>
+            <button class="action-btn" onclick="startRoll('custom')">振る</button>
         </div>
     </div>
 
     <div class="section">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <h3>履歴</h3>
             <div>
                 <button class="text-btn" onclick="downloadLog()">保存</button>
-                <button class="text-btn danger" onclick="clearLog()">削除</button>
+                <button class="text-btn danger" onclick="clearLog()">全削除</button>
             </div>
         </div>
         <div id="log-container"></div>
     </div>
 </main>
+
+<div id="charModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-title">誰が振りますか？</div>
+        <div id="modalCharList" class="char-select-grid"></div>
+        <button class="modal-close" onclick="closeModal()">キャンセル</button>
+    </div>
+</div>
 
 <script>
     const TOTAL_MODS = 100;
@@ -166,73 +196,85 @@
         pc: ["PC1", "PC2", "PC3", "PC4", "PC5"],
         enemy: ["敵1", "敵2", "敵3", "敵4"]
     };
-    let selectedCharId = "pc-0";
+
+    // 保留中のダイス情報
+    let pendingRollData = null;
 
     window.onload = function() {
         loadData();
-        renderCharButtons();
         renderPagination();
         renderModButtons(0);
         
-        // プルダウン生成 (1d1～1d100)
         const select = document.getElementById('any-dice-select');
         for(let i=1; i<=100; i++){
             const opt = document.createElement('option');
             opt.value = i;
             opt.textContent = `1d${i}`;
-            if(i === 100) opt.selected = true; // デフォルト1d100
+            if(i === 100) opt.selected = true;
             select.appendChild(opt);
         }
     };
 
-    function renderCharButtons() {
-        const pcRow = document.getElementById('pcRow');
-        const enemyRow = document.getElementById('enemyRow');
-        pcRow.innerHTML = '<span>PC</span>';
-        charList.pc.forEach((name, i) => {
-            const id = `pc-${i}`;
-            const btn = document.createElement('button');
-            btn.className = `char-btn pc-btn ${selectedCharId === id ? 'active' : ''}`;
-            btn.textContent = name;
-            btn.onclick = () => selectChar(id);
-            pcRow.appendChild(btn);
-        });
-        enemyRow.innerHTML = '<span>敵</span>';
-        charList.enemy.forEach((name, i) => {
-            const id = `enemy-${i}`;
-            const btn = document.createElement('button');
-            btn.className = `char-btn enemy-btn ${selectedCharId === id ? 'active' : ''}`;
-            btn.textContent = name;
-            btn.onclick = () => selectChar(id);
-            enemyRow.appendChild(btn);
-        });
+    // --- ロール開始フロー ---
+
+    // 1. ダイスボタンが押されたら情報を保存してモーダルを開く
+    function startRoll(type, mod = 0) {
+        pendingRollData = { type: type, mod: mod };
+        openCharModal();
     }
 
-    function selectChar(id) {
-        selectedCharId = id;
-        renderCharButtons();
-        saveData();
+    // 2. モーダルを表示
+    function openCharModal() {
+        const modal = document.getElementById('charModal');
+        const list = document.getElementById('modalCharList');
+        list.innerHTML = "";
+
+        // PCボタン
+        charList.pc.forEach(name => {
+            const btn = document.createElement('button');
+            btn.className = "modal-char-btn pc";
+            btn.textContent = name;
+            btn.onclick = () => executeRoll(name);
+            list.appendChild(btn);
+        });
+
+        // 敵ボタン
+        charList.enemy.forEach(name => {
+            const btn = document.createElement('button');
+            btn.className = "modal-char-btn enemy";
+            btn.textContent = name;
+            btn.onclick = () => executeRoll(name);
+            list.appendChild(btn);
+        });
+
+        modal.style.display = 'flex';
     }
 
-    function renameCharacter() {
-        const [type, idx] = selectedCharId.split('-');
-        const currentName = charList[type][idx];
-        const newName = prompt("名前を入力してください:", currentName);
-        if (newName && newName.trim() !== "") {
-            charList[type][idx] = newName.trim();
-            saveData();
-            renderCharButtons();
+    // 3. モーダルを閉じる
+    function closeModal() {
+        document.getElementById('charModal').style.display = 'none';
+        pendingRollData = null;
+    }
+
+    // 4. キャラ選択後に実際にダイスを振る
+    function executeRoll(charName) {
+        document.getElementById('charModal').style.display = 'none';
+        if(!pendingRollData) return;
+
+        const { type, mod } = pendingRollData;
+
+        if (type === '2d6') {
+            roll2d6(mod, charName);
+        } else if (type === 'any') {
+            rollAnyDice(charName);
+        } else if (type === 'custom') {
+            rollCustom(charName);
         }
     }
 
-    function getCurrentCharName() {
-        const [type, idx] = selectedCharId.split('-');
-        return charList[type][idx];
-    }
+    // --- ダイス計算ロジック ---
 
-    // --- ダイス機能 ---
-
-    function roll2d6(mod) {
+    function roll2d6(mod, charName) {
         const d1 = Math.floor(Math.random() * 6) + 1;
         const d2 = Math.floor(Math.random() * 6) + 1;
         const sum = d1 + d2;
@@ -241,18 +283,16 @@
         if (sum === 12) { note = " (自動成功)"; styleClass = "crit"; }
         else if (sum === 2) { note = " (自動失敗)"; styleClass = "fumble"; }
         const diceText = `2d6${mod === 0 ? '' : (mod > 0 ? '+' + mod : mod)}`;
-        addLog(diceText, sum + mod, `[${d1},${d2}]${mod === 0 ? '' : ' + ' + mod}${note}`, styleClass);
+        addLog(charName, diceText, sum + mod, `[${d1},${d2}]${mod === 0 ? '' : ' + ' + mod}${note}`, styleClass);
     }
 
-    // 1d1~1d100 プルダウン実行
-    function rollAnyDice() {
+    function rollAnyDice(charName) {
         const sides = parseInt(document.getElementById('any-dice-select').value);
         const res = Math.floor(Math.random() * sides) + 1;
-        addLog(`1d${sides}`, res, `[${res}]`);
+        addLog(charName, `1d${sides}`, res, `[${res}]`);
     }
 
-    // カスタムダイス
-    function rollCustom() {
+    function rollCustom(charName) {
         const c = parseInt(document.getElementById('customDiceCount').value) || 1;
         const s = parseInt(document.getElementById('customDiceSides').value) || 6;
         const m = parseInt(document.getElementById('customDiceMod').value) || 0;
@@ -260,15 +300,38 @@
         for(let i=0; i<c; i++) { let r = Math.floor(Math.random() * s) + 1; rolls.push(r); sum += r; }
         let detail = `[${rolls.join(',')}]`;
         if(detail.length > 20) detail = `[Sum:${sum}]`;
-        addLog(`${c}d${s}${m >= 0 ? (m===0?'':'+'+m) : m}`, sum + m, `${detail}${m === 0 ? '' : ' + ' + m}`);
+        addLog(charName, `${c}d${s}${m >= 0 ? (m===0?'':'+'+m) : m}`, sum + m, `${detail}${m === 0 ? '' : ' + ' + m}`);
+    }
+
+    // --- キャラクター名管理 ---
+
+    function openRenameTool() {
+        let msg = "名前を変更したいキャラクターの番号を入力してください (例: 1)\n\nPC:\n";
+        charList.pc.forEach((n, i) => msg += `${i+1}: ${n}\n`);
+        msg += "\n敵:\n";
+        charList.enemy.forEach((n, i) => msg += `${i+101}: ${n}\n`);
+        
+        const input = prompt(msg);
+        if(!input) return;
+        
+        const num = parseInt(input);
+        if(num >= 1 && num <= charList.pc.length) {
+            const newName = prompt("新しい名前:", charList.pc[num-1]);
+            if(newName) { charList.pc[num-1] = newName; saveData(); }
+        } else if (num >= 101 && num <= 100 + charList.enemy.length) {
+             const idx = num - 101;
+             const newName = prompt("新しい名前:", charList.enemy[idx]);
+             if(newName) { charList.enemy[idx] = newName; saveData(); }
+        } else {
+            alert("無効な番号です");
+        }
     }
 
     // --- ログ管理 ---
-
-    function addLog(diceType, result, detail, styleClass = "") {
+    function addLog(charName, diceType, result, detail, styleClass = "") {
         const log = {
             time: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
-            char: getCurrentCharName(), dice: diceType, result: result, detail: detail, style: styleClass
+            char: charName, dice: diceType, result: result, detail: detail, style: styleClass
         };
         logs.unshift(log);
         if (logs.length > MAX_LOGS) logs.pop();
@@ -279,28 +342,42 @@
     function renderLogs() {
         const container = document.getElementById('log-container');
         container.innerHTML = logs.length ? "" : '<div style="text-align:center; color:#999; padding:20px;">履歴なし</div>';
-        logs.forEach(l => {
+        
+        logs.forEach((l, index) => {
             const div = document.createElement('div');
             div.className = `log-entry ${l.style}`;
-            div.innerHTML = `<div><div class="log-header">${l.time} : ${l.char} (${l.dice})</div><div class="log-detail">${l.detail}</div></div><div class="log-result">${l.result}</div>`;
+            div.innerHTML = `
+                <div class="log-content">
+                    <div class="log-header">${l.time} : ${l.char} (${l.dice})</div>
+                    <div class="log-detail">${l.detail}</div>
+                </div>
+                <div class="log-right">
+                    <div class="log-result">${l.result}</div>
+                    <button class="del-entry-btn" onclick="deleteLog(${index})" title="削除">×</button>
+                </div>
+            `;
             container.appendChild(div);
         });
+    }
+
+    function deleteLog(index) {
+        logs.splice(index, 1);
+        saveData();
+        renderLogs();
     }
 
     function saveData() {
         localStorage.setItem('sw25_logs', JSON.stringify(logs));
         localStorage.setItem('sw25_chars', JSON.stringify(charList));
-        localStorage.setItem('sw25_selected', selectedCharId);
     }
 
     function loadData() {
         logs = JSON.parse(localStorage.getItem('sw25_logs') || "[]");
         charList = JSON.parse(localStorage.getItem('sw25_chars') || JSON.stringify(charList));
-        selectedCharId = localStorage.getItem('sw25_selected') || "pc-0";
         renderLogs();
     }
 
-    function clearLog() { if(confirm("消去しますか？")) { logs = []; saveData(); renderLogs(); } }
+    function clearLog() { if(confirm("すべての履歴を消去しますか？")) { logs = []; saveData(); renderLogs(); } }
 
     function downloadLog() {
         let text = logs.map(l => `${l.time} [${l.char}] ${l.dice} -> ${l.result} (${l.detail})`).join('\n');
@@ -330,7 +407,7 @@
             const btn = document.createElement('button');
             btn.className = "mod-btn";
             btn.textContent = `+${i}`;
-            btn.onclick = () => roll2d6(i);
+            btn.onclick = () => startRoll('2d6', i);
             grid.appendChild(btn);
         }
     }
